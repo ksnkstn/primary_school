@@ -1,0 +1,346 @@
+body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            background-color: #d4e4d1;
+            padding: 10px 0;
+            border-bottom: 2px solid #a9c3a6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%; /* Растягиваем на всю ширину */
+            box-sizing: border-box; /* Учитываем padding в ширине */
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+            padding: 5px 15px;
+        }
+        .nav-buttons button {
+            background-color: #a9c3a6;
+            color: white;
+            border: none;
+            padding: 5px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .nav-buttons button:hover {
+            background-color: #8fa88c;
+        }
+        .profile {
+            margin-right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #2f4f2f;
+        }
+        .profile .icon, .profile .logout {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .profile .icon:hover, .profile .logout:hover {
+            color: #4a704a;
+        }
+        .profile svg {
+            width: 20px;
+            height: 20px;
+        }
+        .content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1; /* Занимает оставшееся пространство */
+        }
+        h1 {
+            color: #2f4f2f;
+            margin-bottom: 20px;
+        }
+        .login-container {
+            background-color: #d4e4d1;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            text-align: center;
+        }
+        .login-container input {
+            display: block;
+            width: 80%;
+            margin: 10px auto;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #e8f0e7;
+            color: #666;
+        }
+        .login-container button {
+            background-color: #355e3b;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .login-container button:hover {
+            background-color: #2a4a2f;
+        }
+header
+{
+    position: sticky;
+    top: 0;
+}
+.header_teacher {
+            background-color: #d4e4d1;
+            padding: 10px 0;
+            border-bottom: 2px solid #a9c3a6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+            padding: 5px 15px;
+        }
+        .nav-buttons button {
+            background-color: #a9c3a6;
+            color: white;
+            border: none;
+            padding: 5px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .nav-buttons button:hover {
+            background-color: #8fa88c;
+        }
+        .profile {
+            margin-right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #2f4f2f;
+        }
+        .profile .icon, .profile .logout {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .profile .icon:hover, .profile .logout:hover {
+            color: #4a704a;
+        }
+        .profile svg {
+            width: 20px;
+            height: 20px;
+        }
+
+.header_student {
+            background-color: #d4e4d1;
+            padding: 10px 0;
+            border-bottom: 2px solid #a9c3a6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+            padding: 5px 15px;
+        }
+        .nav-buttons button {
+            background-color: #a9c3a6;
+            color: white;
+            border: none;
+            padding: 5px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .nav-buttons button:hover {
+            background-color: #8fa88c;
+        }
+        .profile {
+            margin-right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #2f4f2f;
+        }
+        .profile .icon, .profile .logout {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .profile .icon:hover, .profile .logout:hover {
+            color: #4a704a;
+        }
+        .profile svg {
+            width: 20px;
+            height: 20px;
+        }
+
+.card {
+    border: none;
+    border-radius: 10px;
+}
+
+.navbar {
+    background-color: #d4e4d1;
+    padding: 10px;
+}
+
+.navbar-brand, .navbar-text {
+    color: #2f4f2f;
+}
+
+.navbar-brand.active, .navbar-text.active {
+    color: #355e3b;
+    font-weight: bold;
+    background-color: #e0f7fa;
+    padding: 5px 10px;
+    border-radius: 5px;
+}
+
+.profile a {
+    text-decoration: none;
+}
+
+.btn-success {
+    background-color: #355e3b;
+    border: none;
+}
+
+.btn-success:hover {
+    background-color: #2a4a2f;
+}
+
+.table {
+    background-color: #e0f7fa;
+    border-radius: 10px;
+}
+
+.table th, .table td {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.table thead th {
+    background-color: #d4e4d1;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.table-responsive {
+    border-radius: 10px;
+    border: 2px solid #a9c3a6;
+}
+
+.grade, .homework {
+    cursor: pointer;
+    display: block;
+    min-height: 30px;
+    line-height: 30px;
+}
+
+.table tbody tr td:first-child {
+    text-align: left;
+    padding-left: 10px;
+}
+
+/* Уточнённые стили для строки с ДЗ с максимальной специфичностью */
+table.table tbody tr.homework-row {
+    background-color: #d4e4d1 !important; /* Зеленый цвет, как шапка */
+    border-top: 2px solid #a9c3a6 !important; /* Граница для выделения */
+}
+
+table.table tbody tr.homework-row td {
+    font-weight: bold;
+    text-align: center !important; /* Убедимся, что текст по центру */
+    padding: 8px;
+    background-color: #d4e4d1 !important; /* Применяем цвет к ячейкам */
+}
+/* Стили для плюсика и комментария */
+.add-comment {
+    display: none;
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 15px;
+    height: 15px;
+    background-color: #355e3b;
+    color: white;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 15px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.comment-tooltip {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #fff;
+    border: 1px solid #ccc;
+    padding: 5px;
+    z-index: 100;
+    width: 200px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.comment-input {
+    width: 100%;
+    resize: none;
+}
+
+.save-comment {
+    margin-top: 5px;
+    background-color: #355e3b;
+    color: white;
+    border: none;
+    padding: 2px 5px;
+    cursor: pointer;
+}
+
+.save-comment:hover {
+    background-color: #2a4a2f;
+}
+
+.grade-cell {
+    position: relative;
+}
+
+/* Квадратик при фокусе */
+.grade input:focus {
+    outline: 2px solid #355e3b;
+    outline-offset: -2px;
+    border-radius: 3px;
+}
+
+/* Убираем outline для самой ячейки, только для input */
+.grade:focus {
+    outline: none;
+}
+
+.homework input:focus {
+    outline: 2px solid #355e3b;
+    outline-offset: -2px;
+    border-radius: 3px;
+}
+
+.homework:focus {
+    outline: none;
+}
