@@ -8,7 +8,6 @@ school = Flask(__name__)
 # Настройка подключения к базе
 school.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:183428@localhost:5432/school_db'
 school.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-print("hello world!")
 db = SQLAlchemy(school)
 
 # Модель для учеников
