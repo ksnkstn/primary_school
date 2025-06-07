@@ -15,8 +15,8 @@
     {% if show_header | default(True) %}
     <header class="header_teacher">
         <div class="nav-buttons">
-            <button>Журнал</button>
-            <button>Расписание</button>
+            <a href="/teacher_journal" class="btn btn-success">Журнал</a>
+            <a href="/teacher_schedule" class="btn btn-success">Расписание</a>
         </div>
         <div class="profile">
             <div class="icon" onclick="window.location.href='/profile'">
