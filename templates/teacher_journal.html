@@ -5,93 +5,262 @@
 {% endblock %}
 
 {% block body %}
-<div class="container mt-2">
+<div class="container mt-2 position-relative">
     <div class="row mb-2">
         <div class="col-md-3">
             <label for="class_select" class="form-label">Класс:</label>
             <select id="class_select" class="form-select">
-                <option selected>1A</option>
-                <option>1B</option>
-                <option>2A</option>
+                <option value="1A" {% if class_id == '1A' %}selected{% endif %}>1A</option>
+                <option value="1B" {% if class_id == '1B' %}selected{% endif %}>1B</option>
+                <option value="2A" {% if class_id == '2A' %}selected{% endif %}>2A</option>
             </select>
         </div>
         <div class="col-md-3">
             <label for="subject_select" class="form-label">Предмет:</label>
             <select id="subject_select" class="form-select">
-                <option selected>Математика</option>
-                <option>Русский язык</option>
-                <option>История</option>
+                <option value="math" {% if subject_id == 'math' %}selected{% endif %}>Математика</option>
+                <option value="rus" {% if subject_id == 'rus' %}selected{% endif %}>Русский язык</option>
+                <option value="history" {% if subject_id == 'history' %}selected{% endif %}>История</option>
             </select>
         </div>
     </div>
 
     <div class="table-responsive mt-1" style="max-height: 500px; overflow-y: auto;">
-        <table class="table table-bordered">
+        <table class="table table-bordered fixed-table" id="journal-table">
             <thead>
                 <tr>
-                    <th scope="col">ФИО ученика</th>
+                    <th scope="col" style="width: 200px;">ФИО ученика</th>
                     {% for date in dates %}
-                        <th scope="col">{{ date.strftime('%d.%m.%Y') }}</th>
+                        <th scope="col" style="width: 100px;">{{ date.strftime('%d.%m.%Y') }}</th>
                     {% endfor %}
+                    <th scope="col" style="width: 50px;">
+                        <button id="add-date-btn" class="btn btn-success btn-sm" style="padding: 2px 6px;">
+                            <i class="bi bi-plus-lg"></i>
+                        </button>
+                    </th>
                 </tr>
             </thead>
             <tbody>
                 {% for student in students %}
                     <tr>
-                        <td>{{ student.name }}</td>
+                        <td style="width: 200px;">{{ student.name }}</td>
                         {% for date in dates %}
-                            <td>
+                            <td style="width: 100px; position: relative;">
                                 <span class="grade-cell" data-student-id="{{ student.id }}" data-date="{{ date.strftime('%d.%m.%Y') }}">
                                     {% set grades_for_cell = grades | selectattr('student_id', 'equalto', student.id) | selectattr('date', 'equalto', date) | list %}
                                     {% if grades_for_cell %}
                                         {% for grade in grades_for_cell %}
                                             <span class="grade" data-grade-id="{{ grade.id }}">{{ grade.grade }}</span><br>
                                         {% endfor %}
-                                        <div class="comment-tooltip" style="display: none;">
-                                            <textarea class="comment-input" placeholder="Введите комментарий" rows="2"></textarea>
-                                            <button class="save-comment">Сохранить</button>
-                                        </div>
                                     {% else %}
                                         <span class="grade" data-student-id="{{ student.id }}" data-date="{{ date.strftime('%d.%m.%Y') }}"></span>
                                     {% endif %}
                                 </span>
                             </td>
                         {% endfor %}
+                        <td style="width: 50px;"></td>
                     </tr>
                 {% endfor %}
                 <tr class="homework-row" style="background-color: #d4e4d1;">
-                    <td>ДЗ</td>
+                    <td style="width: 200px;">Домашнее задание</td>
                     {% for date in dates %}
-                        <td>{% for hw in homework %}{% if hw.date.strftime('%Y-%m-%d') == date.strftime('%Y-%m-%d') %}<span class="homework" data-date="{{ date.strftime('%d.%m.%Y') }}">{{ hw.content }}</span>{% endif %}{% endfor %}{% if not homework|selectattr('date', 'equalto', date)|first %}<span class="homework" data-date="{{ date.strftime('%d.%m.%Y') }}"></span>{% endif %}</td>
+                        <td style="width: 100px; position: relative;">
+                            {% for hw in homework %}
+                                {% if hw.date.strftime('%Y-%m-%d') == date.strftime('%Y-%m-%d') and hw.class_name == class_id %}
+                                    <span class="homework" data-date="{{ date.strftime('%d.%m.%Y') }}" data-full-content="{{ hw.content }}">{{ hw.content | truncate(10, true, '...') if hw.content|length > 10 else hw.content }}</span>
+                                {% endif %}
+                            {% endfor %}
+                            {% if not homework|selectattr('date', 'equalto', date)|selectattr('class_name', 'equalto', class_id)|first %}
+                                <span class="homework" data-date="{{ date.strftime('%d.%m.%Y') }}" data-full-content=""></span>
+                            {% endif %}
+                        </td>
                     {% endfor %}
+                    <td style="width: 50px;"></td>
                 </tr>
             </tbody>
         </table>
     </div>
 </div>
 
+<!-- Модальное окно для ввода даты -->
+<div class="modal fade" id="dateModal" tabindex="-1" aria-labelledby="dateModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="dateModalLabel">Добавить дату</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="date" id="new-date-input" class="form-control">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light-green" data-bs-dismiss="modal">Отменить</button>
+                <button type="button" class="btn btn-dark-green" id="save-date-btn">Сохранить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .fixed-table {
+        table-layout: fixed;
+        width: 100%;
+    }
+    .fixed-table th,
+    .fixed-table td {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .btn-dark-green {
+        background-color: #28a745;
+        border-color: #28a745;
+        color: white;
+    }
+    .btn-dark-green:hover {
+        background-color: #218838;
+        border-color: #1e7e34;
+    }
+    .btn-light-green {
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+        color: #155724;
+    }
+    .btn-light-green:hover {
+        background-color: #c3e6cb;
+        border-color: #b1dfbb;
+    }
+    .comment-tooltip {
+        position: absolute;
+        background-color: #fff;
+        border: 1px solid #ccc;
+        padding: 10px;
+        border-radius: 4px;
+        z-index: 2000;
+        font-size: 16px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        max-width: 300px;
+        word-wrap: break-word;
+    }
+    .homework-tooltip {
+        position: absolute;
+        background-color: #d4edda;
+        border: 1px solid #c3e6cb;
+        padding: 10px;
+        border-radius: 4px;
+        z-index: 2000;
+        font-size: 16px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        max-width: 300px;
+        word-wrap: break-word;
+    }
+    .container {
+        position: relative;
+        z-index: 1;
+    }
+    .table-responsive {
+        z-index: 0;
+    }
+</style>
+
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    // Объект для хранения комментариев на клиентской стороне
     const comments = {};
+    const journalTable = document.getElementById('journal-table');
+    const classSelect = document.getElementById('class_select');
+    const subjectSelect = document.getElementById('subject_select');
+    const addDateBtn = document.getElementById('add-date-btn');
 
-    // Обработка клика по ячейкам с оценками
-    document.querySelectorAll('.grade-cell').forEach(cell => {
+    // Инициализация модального окна
+    const dateModal = new bootstrap.Modal(document.getElementById('dateModal'));
+    const newDateInput = document.getElementById('new-date-input');
+    const saveDateBtn = document.getElementById('save-date-btn');
+
+    // Обновление таблицы при изменении класса или предмета
+    function updateJournal() {
+        const classId = classSelect.value;
+        const subjectId = subjectSelect.value;
+        fetch(`/teacher_journal?class_id=${classId}&subject_id=${subjectId}`)
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newTable = doc.querySelector('#journal-table');
+                if (newTable) {
+                    journalTable.innerHTML = newTable.innerHTML;
+                    bindGradeCellEvents();
+                    bindHomeworkEvents();
+                    rebindAddDateButton();
+                }
+            })
+            .catch(error => console.error('Ошибка обновления журнала:', error));
+    }
+
+    // Перепривязка кнопки плюсика
+    function rebindAddDateButton() {
+        const addDateBtn = document.getElementById('add-date-btn');
+        if (addDateBtn) {
+            addDateBtn.removeEventListener('click', handleAddDateClick);
+            addDateBtn.addEventListener('click', handleAddDateClick);
+        }
+    }
+
+    // Обработчик клика на плюсик
+    function handleAddDateClick() {
+        console.log('Plus button clicked');
+        dateModal.show();
+        newDateInput.value = '';
+    }
+
+    // Обработчик сохранения даты
+    saveDateBtn.addEventListener('click', () => {
+        const newDate = new Date(newDateInput.value).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' }).split('.').join('.');
+        if (!isNaN(new Date(newDateInput.value).getTime())) {
+            const theadRow = journalTable.querySelector('thead tr');
+            const newTh = document.createElement('th');
+            newTh.scope = 'col';
+            newTh.style.width = '100px';
+            newTh.textContent = newDate;
+            theadRow.insertBefore(newTh, theadRow.lastElementChild);
+
+            const tbodyRows = journalTable.querySelectorAll('tbody tr');
+            tbodyRows.forEach(row => {
+                const newTd = document.createElement('td');
+                newTd.style.width = '100px';
+                if (row.classList.contains('homework-row')) {
+                    const homeworkSpan = document.createElement('span');
+                    homeworkSpan.className = 'homework';
+                    homeworkSpan.setAttribute('data-date', newDate);
+                    homeworkSpan.setAttribute('data-full-content', '');
+                    newTd.appendChild(homeworkSpan);
+                    bindHomeworkEvent(homeworkSpan);
+                } else {
+                    const gradeSpan = document.createElement('span');
+                    gradeSpan.className = 'grade-cell';
+                    gradeSpan.setAttribute('data-student-id', row.cells[0].querySelector('.grade-cell')?.getAttribute('data-student-id') || row.cells[0].textContent);
+                    gradeSpan.setAttribute('data-date', newDate);
+                    gradeSpan.innerHTML = '<span class="grade"></span>';
+                    newTd.appendChild(gradeSpan);
+                    bindGradeCellEvent(gradeSpan);
+                }
+                row.appendChild(newTd);
+            });
+
+            dateModal.hide();
+        }
+    });
+
+    // Функция для привязки событий к ячейкам с оценками
+    function bindGradeCellEvent(cell) {
         cell.addEventListener('click', (e) => {
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.classList.contains('comment-input') || e.target.classList.contains('save-comment')) return;
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
 
             const studentId = cell.getAttribute('data-student-id');
             const date = cell.getAttribute('data-date');
             const gradeElements = cell.querySelectorAll('.grade');
-            const tooltip = cell.querySelector('.comment-tooltip');
 
-            // Скрываем tooltip, если он открыт
-            if (tooltip) tooltip.style.display = 'none';
-
-            // Очищаем содержимое ячейки
             cell.innerHTML = '';
 
-            // Создаём поля для существующих оценок
             gradeElements.forEach(gradeEl => {
                 const gradeId = gradeEl.getAttribute('data-grade-id');
                 const gradeValue = gradeEl.innerText.trim();
@@ -114,40 +283,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         refreshCell(cell, studentId, date);
                         return;
                     }
-
-                    fetch('/save_grade', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            student_id: studentId,
-                            grade: newGrade,
-                            date: date,
-                            grade_id: gradeId
-                        })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.status === 'success') {
-                            console.log(`Оценка ${newGrade} обновлена (grade_id=${gradeId})`);
-                            refreshCell(cell, studentId, date);
-                        } else {
-                            console.error('Ошибка обновления оценки:', data.message);
-                            refreshCell(cell, studentId, date);
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Ошибка:', error);
-                        refreshCell(cell, studentId, date);
-                    });
+                    saveGrade(studentId, newGrade, date, gradeId);
                 });
 
                 wrapper.appendChild(input);
                 cell.appendChild(wrapper);
             });
 
-            // Добавляем кнопку для новой оценки, если её ещё нет
             if (!cell.querySelector('button')) {
                 const addButton = document.createElement('button');
                 addButton.innerText = '+';
@@ -166,293 +308,88 @@ document.addEventListener('DOMContentLoaded', () => {
                             refreshCell(cell, studentId, date);
                             return;
                         }
-
-                        fetch('/save_grade', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                student_id: studentId,
-                                grade: newGrade,
-                                date: date
-                            })
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.status === 'success') {
-                                console.log(`Оценка ${newGrade} добавлена`);
-                                refreshCell(cell, studentId, date);
-                            } else {
-                                console.error('Ошибка добавления оценки:', data.message);
-                                refreshCell(cell, studentId, date);
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Ошибка:', error);
-                            refreshCell(cell, studentId, date);
-                        });
+                        saveGrade(studentId, newGrade, date);
                     });
 
                     cell.insertBefore(newInput, addButton);
                     newInput.focus();
                 });
-
                 cell.appendChild(addButton);
-            }
-
-            // Восстанавливаем tooltip только если есть оценки
-            if (gradeElements.length > 0) {
-                const newTooltip = document.createElement('div');
-                newTooltip.className = 'comment-tooltip';
-                newTooltip.style.display = 'none';
-
-                const commentInput = document.createElement('textarea');
-                commentInput.className = 'comment-input';
-                commentInput.placeholder = 'Введите комментарий';
-                commentInput.rows = 2;
-                const commentKey = `${studentId}-${date}`;
-                commentInput.value = comments[commentKey] || '';
-
-                const saveButton = document.createElement('button');
-                saveButton.className = 'save-comment';
-                saveButton.innerText = 'Сохранить';
-                saveButton.addEventListener('click', () => {
-                    comments[commentKey] = commentInput.value;
-                    newTooltip.style.display = 'none';
-                });
-
-                newTooltip.appendChild(commentInput);
-                newTooltip.appendChild(saveButton);
-                cell.appendChild(newTooltip);
             }
         });
 
-        // Показываем tooltip при наведении только если есть оценки
+        // Показать комментарий при наведении только если есть оценки
         cell.addEventListener('mouseenter', (e) => {
             const gradeElements = cell.querySelectorAll('.grade');
-            if (gradeElements.length === 0) return;
+            if (gradeElements.length > 0 && gradeElements[0].textContent.trim() !== '') {
+                const studentId = cell.getAttribute('data-student-id');
+                const date = cell.getAttribute('data-date');
+                let tooltip = document.querySelector('.comment-tooltip');
+                if (!tooltip) {
+                    tooltip = document.createElement('div');
+                    tooltip.className = 'comment-tooltip';
+                    document.body.appendChild(tooltip);
+                }
+                const commentKey = `${studentId}-${date}`;
+                tooltip.innerHTML = `
+                    <textarea class="comment-input" placeholder="Введите комментарий" rows="2">${comments[commentKey] || ''}</textarea>
+                    <button class="save-comment">Сохранить</button>
+                    <button class="cancel-comment btn-light-green">Отмена</button>
+                `;
+                const saveButton = tooltip.querySelector('.save-comment');
+                saveButton.addEventListener('click', () => {
+                    comments[commentKey] = tooltip.querySelector('.comment-input').value;
+                    tooltip.style.display = 'none';
+                });
+                const cancelButton = tooltip.querySelector('.cancel-comment');
+                cancelButton.addEventListener('click', () => {
+                    tooltip.style.display = 'none';
+                });
+                const commentInput = tooltip.querySelector('.comment-input');
+                let isActive = false;
 
-            const tooltip = cell.querySelector('.comment-tooltip');
-            if (tooltip) tooltip.style.display = 'block';
+                // Фиксация окошка при нажатии клавиши
+                document.addEventListener('keydown', (event) => {
+                    if (tooltip.style.display === 'block' && !isActive) {
+                        isActive = true;
+                        tooltip.style.display = 'block'; // Фиксируем окошко
+                        commentInput.focus(); // Автофокус на текстовое поле
+                    }
+                }, { once: true }); // Сбрасываем слушатель после первого срабатывания
+
+                // Удержание видимости при взаимодействии с окошком
+                tooltip.addEventListener('mouseenter', () => {
+                    if (isActive) tooltip.style.display = 'block';
+                });
+                tooltip.addEventListener('mouseleave', (e) => {
+                    if (isActive && !tooltip.contains(e.relatedTarget) && document.activeElement !== commentInput && document.activeElement !== saveButton && document.activeElement !== cancelButton) {
+                        tooltip.style.display = 'none';
+                        isActive = false;
+                    }
+                });
+
+                const rect = cell.getBoundingClientRect();
+                tooltip.style.left = `${rect.left + window.scrollX}px`;
+                tooltip.style.top = `${rect.bottom + window.scrollY + 5}px`;
+                tooltip.style.display = 'block';
+            }
         });
 
         cell.addEventListener('mouseleave', (e) => {
-            const tooltip = cell.querySelector('.comment-tooltip');
-            if (tooltip && !tooltip.contains(e.relatedTarget)) {
+            const tooltip = document.querySelector('.comment-tooltip');
+            if (tooltip && !isActive) {
                 tooltip.style.display = 'none';
             }
         });
-    });
-
-    // Функция для обновления содержимого ячейки
-    function refreshCell(cell, studentId, date) {
-        const commentKey = `${studentId}-${date}`;
-        const currentComment = comments[commentKey] || '';
-
-        fetch(`/teacher_journal?student_id=${studentId}&date=${date}`)
-        .then(response => response.text())
-        .then(html => {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
-            const newCell = doc.querySelector(`.grade-cell[data-student-id="${studentId}"][data-date="${date}"]`);
-            if (newCell) {
-                cell.innerHTML = newCell.innerHTML;
-
-                // Восстанавливаем tooltip и комментарий только если есть оценки
-                const gradeElements = cell.querySelectorAll('.grade');
-                if (gradeElements.length > 0) {
-                    const tooltip = document.createElement('div');
-                    tooltip.className = 'comment-tooltip';
-                    tooltip.style.display = 'none';
-
-                    const commentInput = document.createElement('textarea');
-                    commentInput.className = 'comment-input';
-                    commentInput.placeholder = 'Введите комментарий';
-                    commentInput.rows = 2;
-                    commentInput.value = currentComment;
-
-                    const saveButton = document.createElement('button');
-                    saveButton.className = 'save-comment';
-                    saveButton.innerText = 'Сохранить';
-                    saveButton.addEventListener('click', () => {
-                        comments[commentKey] = commentInput.value;
-                        tooltip.style.display = 'none';
-                    });
-
-                    tooltip.appendChild(commentInput);
-                    tooltip.appendChild(saveButton);
-                    cell.appendChild(tooltip);
-
-                    // Повторно привязываем обработчики событий
-                    cell.addEventListener('mouseenter', (e) => {
-                        if (gradeElements.length > 0) {
-                            const tooltip = cell.querySelector('.comment-tooltip');
-                            if (tooltip) tooltip.style.display = 'block';
-                        }
-                    });
-
-                    cell.addEventListener('mouseleave', (e) => {
-                        const tooltip = cell.querySelector('.comment-tooltip');
-                        if (tooltip && !tooltip.contains(e.relatedTarget)) {
-                            tooltip.style.display = 'none';
-                        }
-                    });
-                }
-
-                // Повторно привязываем обработчики клика
-                cell.addEventListener('click', (e) => {
-                    if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.classList.contains('comment-input') || e.target.classList.contains('save-comment')) return;
-
-                    const studentId = cell.getAttribute('data-student-id');
-                    const date = cell.getAttribute('data-date');
-                    const gradeElements = cell.querySelectorAll('.grade');
-                    const tooltip = cell.querySelector('.comment-tooltip');
-
-                    if (tooltip) tooltip.style.display = 'none';
-                    cell.innerHTML = '';
-
-                    gradeElements.forEach(gradeEl => {
-                        const gradeId = gradeEl.getAttribute('data-grade-id');
-                        const gradeValue = gradeEl.innerText.trim();
-
-                        const wrapper = document.createElement('div');
-                        wrapper.style.display = 'inline-block';
-                        wrapper.style.marginBottom = '5px';
-
-                        const input = document.createElement('input');
-                        input.type = 'text';
-                        input.pattern = '[1-5]';
-                        input.value = gradeValue;
-                        input.style.width = '40px';
-                        input.dataset.gradeId = gradeId;
-
-                        input.addEventListener('blur', () => {
-                            const newGrade = input.value;
-                            if (!newGrade.match(/^[1-5]$/)) {
-                                console.log(`Grade ${newGrade} is out of range (1-5). Reverting to ${gradeValue}`);
-                                refreshCell(cell, studentId, date);
-                                return;
-                            }
-
-                            fetch('/save_grade', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json'
-                                },
-                                body: JSON.stringify({
-                                    student_id: studentId,
-                                    grade: newGrade,
-                                    date: date,
-                                    grade_id: gradeId
-                                })
-                            })
-                            .then(response => response.json())
-                            .then(data => {
-                                if (data.status === 'success') {
-                                    console.log(`Оценка ${newGrade} обновлена (grade_id=${gradeId})`);
-                                    refreshCell(cell, studentId, date);
-                                } else {
-                                    console.error('Ошибка обновления оценки:', data.message);
-                                    refreshCell(cell, studentId, date);
-                                }
-                            })
-                            .catch(error => {
-                                console.error('Ошибка:', error);
-                                refreshCell(cell, studentId, date);
-                            });
-                        });
-
-                        wrapper.appendChild(input);
-                        cell.appendChild(wrapper);
-                    });
-
-                    if (!cell.querySelector('button')) {
-                        const addButton = document.createElement('button');
-                        addButton.innerText = '+';
-                        addButton.style.marginTop = '5px';
-                        addButton.addEventListener('click', () => {
-                            const newInput = document.createElement('input');
-                            newInput.type = 'text';
-                            newInput.pattern = '[1-5]';
-                            newInput.style.width = '40px';
-                            newInput.style.marginBottom = '5px';
-
-                            newInput.addEventListener('blur', () => {
-                                const newGrade = newInput.value;
-                                if (!newGrade.match(/^[1-5]$/)) {
-                                    console.log(`Grade ${newGrade} is out of range (1-5). Canceling.`);
-                                    refreshCell(cell, studentId, date);
-                                    return;
-                                }
-
-                                fetch('/save_grade', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json'
-                                    },
-                                    body: JSON.stringify({
-                                        student_id: studentId,
-                                        grade: newGrade,
-                                        date: date
-                                    })
-                                })
-                                .then(response => response.json())
-                                .then(data => {
-                                    if (data.status === 'success') {
-                                        console.log(`Оценка ${newGrade} добавлена`);
-                                        refreshCell(cell, studentId, date);
-                                    } else {
-                                        console.error('Ошибка добавления оценки:', data.message);
-                                        refreshCell(cell, studentId, date);
-                                    }
-                                })
-                                .catch(error => {
-                                    console.error('Ошибка:', error);
-                                    refreshCell(cell, studentId, date);
-                                });
-                            });
-
-                            cell.insertBefore(newInput, addButton);
-                            newInput.focus();
-                        });
-
-                        cell.appendChild(addButton);
-                    }
-
-                    if (gradeElements.length > 0) {
-                        const newTooltip = document.createElement('div');
-                        newTooltip.className = 'comment-tooltip';
-                        newTooltip.style.display = 'none';
-
-                        const commentInput = document.createElement('textarea');
-                        commentInput.className = 'comment-input';
-                        commentInput.placeholder = 'Введите комментарий';
-                        commentInput.rows = 2;
-                        const commentKey = `${studentId}-${date}`;
-                        commentInput.value = comments[commentKey] || '';
-
-                        const saveButton = document.createElement('button');
-                        saveButton.className = 'save-comment';
-                        saveButton.innerText = 'Сохранить';
-                        saveButton.addEventListener('click', () => {
-                            comments[commentKey] = commentInput.value;
-                            newTooltip.style.display = 'none';
-                        });
-
-                        newTooltip.appendChild(commentInput);
-                        newTooltip.appendChild(saveButton);
-                        cell.appendChild(newTooltip);
-                    }
-                });
-            }
-        })
-        .catch(error => console.error('Ошибка обновления ячейки:', error));
-        document.activeElement.blur();
     }
 
-    // Обработка клика по ячейкам с ДЗ
-    document.querySelectorAll('.homework').forEach(cell => {
+    // Функция для привязки событий ко всем ячейкам с оценками
+    function bindGradeCellEvents() {
+        document.querySelectorAll('.grade-cell').forEach(cell => bindGradeCellEvent(cell));
+    }
+
+    // Функция для привязки событий к ячейкам с домашним заданием
+    function bindHomeworkEvent(cell) {
         cell.addEventListener('click', (e) => {
             const date = e.target.getAttribute('data-date');
             const currentValue = e.target.innerText;
@@ -465,25 +402,7 @@ document.addEventListener('DOMContentLoaded', () => {
             input.addEventListener('blur', () => {
                 const newHomework = input.value;
                 e.target.innerText = newHomework;
-                fetch('/save_homework', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        date: date,
-                        content: newHomework
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        console.log(`ДЗ "${newHomework}" сохранено на дату ${date}`);
-                    } else {
-                        console.error('Ошибка сохранения ДЗ');
-                    }
-                })
-                .catch(error => console.error('Ошибка:', error));
+                saveHomework(date, newHomework);
                 document.activeElement.blur();
             });
 
@@ -491,7 +410,126 @@ document.addEventListener('DOMContentLoaded', () => {
             e.target.appendChild(input);
             input.focus();
         });
-    });
+
+        // Показать tooltip при наведении
+        cell.addEventListener('mouseenter', (e) => {
+            const fullContent = e.target.getAttribute('data-full-content');
+            if (fullContent && fullContent.length > 10) {
+                let tooltip = document.querySelector('.homework-tooltip');
+                if (!tooltip) {
+                    tooltip = document.createElement('div');
+                    tooltip.className = 'homework-tooltip';
+                    document.body.appendChild(tooltip);
+                }
+                tooltip.textContent = fullContent;
+                const rect = e.target.getBoundingClientRect();
+                tooltip.style.left = `${rect.left + window.scrollX}px`;
+                tooltip.style.top = `${rect.bottom + window.scrollY + 5}px`;
+                tooltip.style.display = 'block';
+            }
+        });
+
+        cell.addEventListener('mouseleave', (e) => {
+            const tooltip = document.querySelector('.homework-tooltip');
+            if (tooltip && !tooltip.contains(e.relatedTarget)) {
+                tooltip.style.display = 'none';
+            }
+        });
+    }
+
+    // Функция для привязки событий ко всем ячейкам с домашним заданием
+    function bindHomeworkEvents() {
+        document.querySelectorAll('.homework').forEach(cell => bindHomeworkEvent(cell));
+    }
+
+    // Функция для сохранения оценки
+    function saveGrade(studentId, grade, date, gradeId = null) {
+        const subjectId = subjectSelect.value;
+        const data = {
+            student_id: studentId,
+            grade: grade,
+            date: date,
+            subject_id: subjectId,
+            grade_id: gradeId
+        };
+        fetch('/save_grade', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                console.log(`Оценка ${grade} сохранена для student_id=${studentId}, date=${date}`);
+                refreshCell(document.querySelector(`.grade-cell[data-student-id="${studentId}"][data-date="${date}"]`), studentId, date);
+            } else {
+                console.error('Ошибка сохранения оценки:', data.message);
+            }
+        })
+        .catch(error => console.error('Ошибка:', error));
+    }
+
+    // Функция для сохранения домашнего задания
+    function saveHomework(date, content) {
+        const subjectId = subjectSelect.value;
+        const classId = classSelect.value;
+        const data = {
+            date: date,
+            content: content,
+            subject_id: subjectId,
+            class_id: classId
+        };
+        fetch('/save_homework', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                console.log(`ДЗ "${content}" сохранено для date=${date}`);
+                const homeworkCell = document.querySelector(`.homework[data-date="${date}"]`);
+                if (homeworkCell) {
+                    homeworkCell.innerText = content;
+                    homeworkCell.setAttribute('data-full-content', content);
+                }
+            } else {
+                console.error('Ошибка сохранения ДЗ:', data.message);
+            }
+        })
+        .catch(error => console.error('Ошибка:', error));
+    }
+
+    // Функция для обновления содержимого ячейки
+    function refreshCell(cell, studentId, date) {
+        const commentKey = `${studentId}-${date}`;
+        const currentComment = comments[commentKey] || '';
+        const classId = classSelect.value;
+        const subjectId = subjectSelect.value;
+
+        fetch(`/teacher_journal?student_id=${studentId}&date=${date}&class_id=${classId}&subject_id=${subjectId}`)
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newCell = doc.querySelector(`.grade-cell[data-student-id="${studentId}"][data-date="${date}"]`);
+                if (newCell) {
+                    cell.innerHTML = newCell.innerHTML;
+                    bindGradeCellEvent(cell);
+                }
+            })
+            .catch(error => console.error('Ошибка обновления ячейки:', error));
+        document.activeElement.blur();
+    }
+
+    // Инициализация начальных событий
+    bindGradeCellEvents();
+    bindHomeworkEvents();
+    rebindAddDateButton();
+
+    // Обработчики изменения селектов
+    classSelect.addEventListener('change', updateJournal);
+    subjectSelect.addEventListener('change', updateJournal);
 });
 </script>
 {% endblock %}
