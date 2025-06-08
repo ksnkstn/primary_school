@@ -1,11 +1,11 @@
-{% extends 'base_student.html' %}
+{% extends 'base_parent.html' %}
 
 {% block title %}
-Дневник ученика
+Дневник родителя
 {% endblock %}
 
 {% block body %}
-    <h1 style="text-align: left; font-size: 1.2em; margin-top: 10px;">Дневник ученика: {{ student.name }} ({{ student.class_name }})</h1>
+    <h1 style="text-align: left; font-size: 1.2em; margin-top: 10px;">Дневник: {{ student.name }} ({{ student.class_name }})</h1>
 
     <!-- Кнопки переключения недель -->
     <div class="week-nav">
@@ -287,12 +287,13 @@
             border-color: #2a4a2f;
         }
     </style>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const prevWeek = document.getElementById('prev-week');
             const nextWeek = document.getElementById('next-week');
             const weekRange = document.getElementById('week-range');
-            let currentWeekStart = new Date('{{ current_week_start|string_to_date|tojson }}'.replace(/"/g, '')); // Удаляем лишние кавычки
+            let currentWeekStart = new Date('{{ current_week_start|string_to_date|tojson }}'.replace(/"/g, ''));
             currentWeekStart.setHours(0, 0, 0, 0);
 
             const detailModal = new bootstrap.Modal(document.getElementById('detailModal'), { backdrop: 'static', keyboard: false });
@@ -307,14 +308,9 @@
                 const endDate = formatDate(new Date(currentWeekStart.getTime() + 4 * 24 * 60 * 60 * 1000));
                 weekRange.textContent = `${startDate} - ${endDate}`;
 
-                fetch(`/student_diary_data?start_date=${startDate}&end_date=${endDate}`)
+                fetch(`/parent_diary_data?start_date=${startDate}&end_date=${endDate}&child_id={{ selected_child_id }}`)
                     .then(response => response.json())
                     .then(data => {
-                        if (data.error) {
-                            console.error(data.error);
-                            return;
-                        }
-
                         const days = data.days;
                         const dailyData = data.daily_data;
                         const week1 = document.getElementById('week1');
@@ -407,7 +403,6 @@
                             </div>
                         `;
 
-                        // Привязка событий после обновления таблицы
                         document.querySelectorAll('.comment-text, .hw-text').forEach(element => {
                             element.addEventListener('click', () => {
                                 const fullText = element.classList.contains('comment-text') ? element.getAttribute('data-full-comment') : element.getAttribute('data-full-hw');

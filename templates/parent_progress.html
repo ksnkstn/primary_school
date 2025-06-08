@@ -1,0 +1,165 @@
+{% extends 'base_parent.html' %}
+
+{% block title %}
+Успеваемость родителя
+{% endblock %}
+
+{% block body %}
+    <h1 style="text-align: left; font-size: 1.2em; margin-top: 10px;">Успеваемость: {{ student.name }} ({{ student.class_name }})</h1>
+
+    <!-- Переключение по четвертям -->
+    <div class="quarter-nav" style="margin: 10px 0; text-align: center;">
+        <button class="quarter-btn" data-quarter="1">1 четверть</button>
+        <button class="quarter-btn" data-quarter="2">2 четверть</button>
+        <button class="quarter-btn" data-quarter="3">3 четверть</button>
+        <button class="quarter-btn" data-quarter="4" class="active">4 четверть</button>
+    </div>
+
+    <!-- Таблица успеваемости -->
+    <div class="progress-table" id="progress-table">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Предметы</th>
+                    <th>Оценки</th>
+                    <th>Средний балл</th>
+                    <th>Итог 4 четверть</th> <!-- Показываем 4-ю четверть по умолчанию -->
+                </tr>
+            </thead>
+            <tbody id="progress-table-body">
+                {% for subject, quarters in progress_by_subject.items() %}
+                    {% set progress = quarters.get(4) %} <!-- По умолчанию 4-я четверть -->
+                    {% if progress %}
+                        <tr>
+                            <td>{{ progress.subject }}</td>
+                            <td>{{ progress.grades if progress.grades else 'Нет данных' }}</td>
+                            <td>{{ '%.1f' % progress.average_grade if progress.average_grade else 'Н/Д' }}</td>
+                            <td>{{ progress.final_grade if progress.final_grade else '' }}</td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <style>
+        .quarter-nav {
+            margin: 10px 0;
+            text-align: center;
+        }
+        .quarter-btn {
+            padding: 5px 25px;
+            margin: 0 5px;
+            cursor: pointer;
+            background-color: #355e3b; /* Зеленый фон для кнопок */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+        .quarter-btn:hover {
+            background-color: #2a4a2f; /* Темнее при наведении */
+        }
+        .quarter-btn.active {
+            background-color: #006400; /* Темный зеленый для активной кнопки */
+            font-weight: bold;
+        }
+        .progress-table {
+            margin: 10px 0;
+        }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #fff;
+            border-radius: 10px;
+            overflow: hidden;
+            table-layout: fixed;
+        }
+        .table th,
+        .table td {
+            border: 1px solid #dee2e6;
+            padding: 8px;
+            word-wrap: break-word;
+        }
+        .table th {
+            background-color: #28a745; /* Зеленый фон для заголовков */
+            color: #000000;
+            font-weight: bold;
+            text-align: center;
+        }
+        .table td:nth-child(2) { /* Столбец "Оценки" (второй столбец) */
+            text-align: left;
+        }
+        .table td:nth-child(3), /* Столбец "Средний балл" */
+        .table td:nth-child(4) { /* Столбец "Итог 4 четверть" */
+            text-align: center;
+        }
+        .table tr:nth-child(even) {
+            background-color: #e9f5e9; /* Светло-зеленый фон для чередования */
+        }
+        .table tr:hover {
+            background-color: #d4edda; /* Светло-зеленый при наведении */
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const quarterButtons = document.querySelectorAll('.quarter-btn');
+            const tableHeader = document.querySelector('.table th:last-child');
+            const tableBody = document.querySelector('#progress-table-body');
+            const quarterData = {
+                1: 'Итог 1 четверть',
+                2: 'Итог 2 четверть',
+                3: 'Итог 3 четверть',
+                4: 'Итог 4 четверть'
+            };
+
+            // Функция для обновления таблицы
+            function updateTable(quarter) {
+                tableHeader.textContent = quarterData[quarter];
+                tableBody.innerHTML = '';
+                const progressData = {
+                    {% for subject, quarters in progress_by_subject.items() %}
+                        "{{ subject }}": {
+                            {% for q in range(1, 5) %}
+                                {{ q }}: {
+                                    grades: "{{ quarters[q].grades if quarters[q] and quarters[q].grades else 'Нет данных' }}",
+                                    average_grade: {{ quarters[q].average_grade if quarters[q] and quarters[q].average_grade else 'null' }},
+                                    final_grade: "{{ quarters[q].final_grade if quarters[q] and quarters[q].final_grade else '' }}",
+                                    quarter: {{ q }}
+                                }{{ "," if not loop.last }}
+                            {% endfor %}
+                        }{{ "," if not loop.last }}
+                    {% endfor %}
+                };
+
+                for (let subject in progressData) {
+                    const item = progressData[subject][quarter];
+                    if (item) {
+                        tableBody.innerHTML += `
+                            <tr>
+                                <td>${subject}</td>
+                                <td>${item.grades}</td>
+                                <td>${item.average_grade !== null ? item.average_grade.toFixed(1) : 'Н/Д'}</td>
+                                <td>${item.final_grade}</td>
+                            </tr>
+                        `;
+                    }
+                }
+            }
+
+            quarterButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    quarterButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    const quarter = button.getAttribute('data-quarter');
+                    updateTable(quarter);
+                });
+            });
+
+            // Активируем 4-ю четверть по умолчанию и загружаем данные
+            quarterButtons[3].classList.add('active');
+            updateTable('4');
+        });
+    </script>
+{% endblock %}

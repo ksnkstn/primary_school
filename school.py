@@ -451,6 +451,153 @@ def summary():
 
     return render_template('summary.html', show_header=True, student=student, progress_by_subject=progress_by_subject)
 
+# Функция для получения списка детей родителя
+def get_parent_children(parent_id):
+    # Ограничиваем список только Барановым (id=1) и Егоровой (id=7)
+    children = Student.query.filter(
+        Student.id.in_([1, 7])  # Баранов и Егорова
+    ).all()
+    return children
+
+# Маршрут для дневника родителя
+@school.route('/parent_diary')
+def parent_diary():
+    child_id = request.args.get('child_id', type=int, default=1)  # По умолчанию Баранов
+    student = db.session.get(Student, child_id)
+    if not student:
+        return "Ученик не найден", 404
+
+    # Определяем текущую неделю
+    now = datetime.now()
+    current_week_start = now.date() - timedelta(days=now.weekday())  # Понедельник текущей недели
+    current_week_end = current_week_start + timedelta(days=4)  # Пятница
+
+    # Дни недели
+    days = [{'day_name': d.strftime('%A'), 'date': d.strftime('%d.%m.%Y')}
+            for d in pd.date_range(current_week_start, current_week_end).tolist() if d.weekday() < 5]
+
+    # Оценки
+    grades = Grade.query.filter(
+        Grade.student_id == child_id,
+        Grade.date.between(current_week_start, current_week_end)
+    ).all()
+
+    # Уроки
+    lessons = db.session.query(Lesson, Teacher.name).outerjoin(Teacher, Lesson.teacher_id == Teacher.id).filter(
+        Lesson.class_name == student.class_name,
+        Lesson.date.between(current_week_start, current_week_end)
+    ).order_by(Lesson.time).all()
+
+    # Домашнее задание
+    homework = Homework.query.filter(
+        Homework.class_name == student.class_name,
+        Homework.date.between(current_week_start, current_week_end)
+    ).all()
+
+    # Формируем данные по дням
+    daily_data = {}
+    for day in days:
+        date_str = day['date']
+        date = datetime.strptime(date_str, '%d.%m.%Y').date()
+        daily_data[date_str] = {
+            'date': date,
+            'grades': [{'id': g.id, 'grade': g.grade, 'comment': g.comment, 'date': g.date.strftime('%d.%m.%Y'), 'subject': g.subject} for g in grades if g.date == date],
+            'lessons': [{'time': l.time, 'subject': l.subject, 'teacher_name': t or 'Не указан', 'room': l.room} for l, t in lessons if l.date == date],
+            'homework': [{'subject': h.subject, 'content': h.content, 'date': h.date.strftime('%d.%m.%Y')} for h in homework if h.date == date]
+        }
+
+    children = get_parent_children(1)  # Предполагаем parent_id = 1
+    return render_template('parent_diary.html', show_header=True, student=student, current_week_start=current_week_start.strftime('%d.%m.%Y'), current_week_end=current_week_end.strftime('%d.%m.%Y'), daily_data=daily_data, days=days, children=children, selected_child_id=child_id)
+
+@school.route('/parent_diary_data')
+def parent_diary_data():
+    child_id = request.args.get('child_id', type=int, default=1)
+    student = db.session.get(Student, child_id)
+    if not student:
+        return jsonify({'error': 'Ученик не найден'}), 404
+
+    start_date = datetime.strptime(request.args.get('start_date'), '%d.%m.%Y').date()
+    end_date = datetime.strptime(request.args.get('end_date'), '%d.%m.%Y').date()
+
+    # Дни недели
+    days = [{'day_name': d.strftime('%A'), 'date': d.strftime('%d.%m.%Y')}
+            for d in pd.date_range(start_date, end_date).tolist() if d.weekday() < 5]
+
+    # Оценки
+    grades = Grade.query.filter(
+        Grade.student_id == child_id,
+        Grade.date.between(start_date, end_date)
+    ).all()
+
+    # Уроки
+    lessons = db.session.query(Lesson, Teacher.name).outerjoin(Teacher, Lesson.teacher_id == Teacher.id).filter(
+        Lesson.class_name == student.class_name,
+        Lesson.date.between(start_date, end_date)
+    ).order_by(Lesson.time).all()
+
+    # Домашнее задание
+    homework = Homework.query.filter(
+        Homework.class_name == student.class_name,
+        Homework.date.between(start_date, end_date)
+    ).all()
+
+    # Формируем данные по дням
+    daily_data = {}
+    for day in days:
+        date_str = day['date']
+        date = datetime.strptime(date_str, '%d.%m.%Y').date()
+        daily_data[date_str] = {
+            'date': date,
+            'grades': [{'id': g.id, 'grade': g.grade, 'comment': g.comment, 'date': g.date.strftime('%d.%m.%Y'), 'subject': g.subject} for g in grades if g.date == date],
+            'lessons': [{'time': l.time, 'subject': l.subject, 'teacher_name': t or 'Не указан', 'room': l.room} for l, t in lessons if l.date == date],
+            'homework': [{'subject': h.subject, 'content': h.content, 'date': h.date.strftime('%d.%m.%Y')} for h in homework if h.date == date]
+        }
+
+    return jsonify({
+        'days': days,
+        'daily_data': daily_data,
+        'start_date': start_date.strftime('%d.%m.%Y'),
+        'end_date': end_date.strftime('%d.%m.%Y')
+    })
+
+@school.route('/parent_progress')
+def parent_progress():
+    child_id = request.args.get('child_id', type=int, default=1)
+    student = db.session.get(Student, child_id)
+    if not student:
+        return "Ученик не найден", 404
+
+    # Получаем все данные об успеваемости
+    progress_data = Progress.query.filter_by(student_id=child_id).all()
+
+    # Группируем данные по предметам
+    subjects = ['Английский язык', 'История', 'Литература', 'Логика', 'Математика', 'Окружающий мир', 'Русский язык', 'Физкультура']
+    progress_by_subject = {subject: {q: None for q in range(1, 5)} for subject in subjects}
+    for progress in progress_data:
+        progress_by_subject[progress.subject][progress.quarter] = progress
+
+    children = get_parent_children(1)
+    return render_template('parent_progress.html', show_header=True, student=student, progress_by_subject=progress_by_subject, children=children, selected_child_id=child_id, quarter=request.args.get('quarter', type=int, default=1), class_name=student.class_name)
+
+@school.route('/parent_summary')
+def parent_summary():
+    child_id = request.args.get('child_id', type=int, default=1)
+    student = db.session.get(Student, child_id)
+    if not student:
+        return "Ученик не найден", 404
+
+    # Получаем все данные об успеваемости
+    progress_data = Progress.query.filter_by(student_id=child_id).all()
+
+    # Группируем данные по предметам
+    subjects = ['Английский язык', 'История', 'Литература', 'Логика', 'Математика', 'Окружающий мир', 'Русский язык', 'Физкультура']
+    progress_by_subject = {subject: {q: None for q in range(1, 5)} for subject in subjects}
+    for progress in progress_data:
+        progress_by_subject[progress.subject][progress.quarter] = progress
+
+    children = get_parent_children(1)
+    return render_template('parent_summary.html', show_header=True, student=student, progress_by_subject=progress_by_subject, children=children, selected_child_id=child_id, quarter=request.args.get('quarter', type=int, default=1), class_name=student.class_name)
+
 # Инициализация базы данных
 with school.app_context():
     db.create_all()
