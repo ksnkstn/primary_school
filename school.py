@@ -41,7 +41,7 @@ class Teacher(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
 
-# Модель для расписания
+# Модель для расписания учителей
 class Schedule(db.Model):
     __tablename__ = 'schedules'
     id = db.Column(db.Integer, primary_key=True)
@@ -51,6 +51,20 @@ class Schedule(db.Model):
     subject = db.Column(db.String(100))
     class_name = db.Column(db.String(20))
     room = db.Column(db.String(10))
+
+# Модель для уроков (расписания классов)
+class Lesson(db.Model):
+    __tablename__ = 'lessons'
+    id = db.Column(db.Integer, primary_key=True)
+    teacher_id = db.Column(db.Integer, db.ForeignKey('teachers.id'), nullable=False)
+    date = db.Column(db.Date, nullable=False)
+    time = db.Column(db.String(20), nullable=False)
+    subject = db.Column(db.String(100), nullable=False)
+    class_name = db.Column(db.String(20), nullable=False)
+    room = db.Column(db.String(10), nullable=False)
+    __table_args__ = (
+        db.UniqueConstraint('teacher_id', 'date', 'time', 'class_name', name='unique_lesson'),
+    )
 
 # Маршруты
 @school.route('/teacher_journal')
@@ -228,7 +242,62 @@ def teacher_schedule_data():
 
 @school.route('/class_schedule')
 def class_schedule():
-    return render_template('class_schedule.html')
+    start_date = datetime.now().date() - timedelta(days=datetime.now().weekday())
+    end_date = start_date + timedelta(days=4)  # 5 дней (понедельник-пятница)
+    class_id = request.args.get('class_id', '1A').upper()  # Приводим к верхнему регистру
+    print(f"Class schedule requested: class_id={class_id}, start_date={start_date}, end_date={end_date}")  # Отладка
+    days = [{'day_name': d.strftime('%A'), 'date': d.strftime('%d.%m.%Y')}
+            for d in pd.date_range(start_date, end_date).tolist() if d.weekday() < 5]
+    lessons = db.session.query(Lesson, Teacher.name).outerjoin(Teacher, Lesson.teacher_id == Teacher.id).filter(
+        Lesson.class_name == class_id,
+        Lesson.date.between(start_date, end_date)
+    ).all()
+    print(f"Lessons found: {len(lessons)} for class {class_id}")  # Отладка
+    schedule = {}
+    time_slots = ['08:00-08:45', '08:50-09:35', '09:40-10:25', '10:45-11:30', '11:35-12:20', '12:25-13:10']
+    for t in time_slots:
+        schedule[t] = {'time': t, 'lessons': []}
+    for lesson, teacher_name in lessons:
+        print(f"Lesson: teacher_id={lesson.teacher_id}, teacher_name={teacher_name}, subject={lesson.subject}, room={lesson.room}, class_name={lesson.class_name}")  # Отладка
+        schedule[lesson.time]['lessons'].append({
+            'date': lesson.date.strftime('%d.%m.%Y'),
+            'subject': lesson.subject,
+            'teacher_name': teacher_name or 'Не указан',
+            'room': lesson.room
+        })
+    return render_template('class_schedule.html',
+                           start_date=start_date.strftime('%d.%m.%Y'),
+                           end_date=end_date.strftime('%d.%m.%Y'),
+                           class_id=class_id,
+                           days=days,
+                           schedule=list(schedule.values()))
+
+@school.route('/class_schedule_data')
+def class_schedule_data():
+    start_date = datetime.strptime(request.args.get('start_date'), '%Y-%m-%d').date()
+    end_date = datetime.strptime(request.args.get('end_date'), '%Y-%m-%d').date()
+    class_id = request.args.get('class_id', '1A').upper()  # Приводим к верхнему регистру
+    print(f"Class schedule data requested: class_id={class_id}, start_date={start_date}, end_date={end_date}")  # Отладка
+    days = [{'day_name': d.strftime('%A'), 'date': d.strftime('%d.%m.%Y')}
+            for d in pd.date_range(start_date, end_date).tolist() if d.weekday() < 5]
+    lessons = db.session.query(Lesson, Teacher.name).outerjoin(Teacher, Lesson.teacher_id == Teacher.id).filter(
+        Lesson.class_name == class_id,
+        Lesson.date.between(start_date, end_date)
+    ).all()
+    print(f"Lessons found: {len(lessons)} for class {class_id}")  # Отладка
+    schedule = {}
+    time_slots = ['08:00-08:45', '08:50-09:35', '09:40-10:25', '10:45-11:30', '11:35-12:20', '12:25-13:10']
+    for t in time_slots:
+        schedule[t] = {'time': t, 'lessons': []}
+    for lesson, teacher_name in lessons:
+        print(f"Lesson: teacher_id={lesson.teacher_id}, teacher_name={teacher_name}, subject={lesson.subject}, room={lesson.room}, class_name={lesson.class_name}")  # Отладка
+        schedule[lesson.time]['lessons'].append({
+            'date': lesson.date.strftime('%d.%m.%Y'),
+            'subject': lesson.subject,
+            'teacher_name': teacher_name or 'Не указан',
+            'room': lesson.room
+        })
+    return jsonify({'days': days, 'schedule': list(schedule.values())})
 
 # Инициализация базы данных
 with school.app_context():

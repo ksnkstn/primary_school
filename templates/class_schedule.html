@@ -1,12 +1,226 @@
 {% extends 'base_teacher.html' %}
 
-{% block title %}Расписание Класса{% endblock %}
+{% block title %}Расписание класса{% endblock %}
 
 {% block body %}
+<style>
+    /* Стили для header */
+    header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        z-index: 1000; /* Высокий z-index, чтобы header был сверху */
+        background-color: #fff; /* Фон, чтобы таблица не просвечивала */
+    }
+
+    /* Отступ для контента, чтобы не перекрывался header */
+    .content {
+        margin-top: 40px; /* Уменьшаем верхний отступ, чтобы поднять содержимое */
+    }
+
+    /* Стили для таблицы расписания */
+    .class-schedule-table {
+        position: relative;
+        z-index: 1; /* Низкий z-index, чтобы таблица была под header */
+        margin: 0; /* Убираем внешние отступы */
+        border-collapse: collapse; /* Объединяем границы ячеек */
+        width: 100%; /* Полная ширина */
+    }
+
+    /* Стили для ячеек таблицы */
+    .class-schedule-table th:first-child,
+    .class-schedule-table td:first-child {
+        width: 200px;
+        height: 50px;
+        background-color: #e8f0e7;
+        color: #666;
+        text-align: center !important; /* Горизонтальное центрирование с высоким приоритетом */
+        vertical-align: middle !important; /* Вертикальное центрирование с высоким приоритетом */
+        border-right: 1px solid #000000;
+        border-bottom: 1px solid #000000;
+    }
+
+    .class-schedule-table th:not(:first-child) {
+        width: 300px;
+        height: 50px;
+        text-align: center;
+        vertical-align: middle;
+        border-right: 1px solid #000000;
+        border-bottom: 1px solid #000000;
+    }
+
+    .class-schedule-table td:not(:first-child) {
+        width: 300px;
+        height: 100px;
+        text-align: center;
+        vertical-align: middle;
+        border-right: 1px solid #000000;
+        border-bottom: 1px solid #000000;
+    }
+
+    /* Отступ снизу таблицы */
+    .table-responsive {
+        margin-bottom: 20px; /* Отступ снизу */
+    }
+
+    /* Стили для ссылок переключения */
+    .toggle-class-schedule {
+        background-color: #d4edda;
+        border: 1px solid #c3e6cb;
+        color: #155724;
+        padding: 5px 15px;
+        border-radius: 5px;
+        text-decoration: none;
+        display: inline-block;
+        margin-top: 10px;
+    }
+
+    .toggle-class-schedule:hover {
+        background-color: #c3e6cb;
+        color: #10451a;
+    }
+</style>
+
 <div class="content">
     <div class="container mt-2">
-        <h4>Расписание Класса</h4>
-        <p>Страница в разработке.</p>
+        <div class="row mb-2 d-flex align-items-center">
+            <div class="col-md-6">
+                <h4 class="mb-0">Расписание класса</h4>
+            </div>
+            <div class="col-md-6 text-end">
+                <a href="{{ url_for('teacher_schedule') }}" class="toggle-class-schedule">Перейти к расписанию учителя</a>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <label for="class_select" class="form-label">Класс:</label>
+                <select id="class_select" class="form-select">
+                    <option value="1A" {% if class_id == '1A' %}selected{% endif %}>1A</option>
+                    <option value="1В" {% if class_id == '1В' %}selected{% endif %}>1В</option>
+                    <option value="2A" {% if class_id == '2A' %}selected{% endif %}>2A</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="week-nav">
+            <button id="prev-week"><</button>
+            <span id="week-range">{{ start_date }}-{{ end_date }}</span>
+            <button id="next-week">></button>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table class-schedule-table">
+                <thead id="schedule-head">
+                    <tr>
+                        <th scope="col">Время</th>
+                        {% for day in days %}
+                            <th scope="col">{{ day.day_name|replace('Monday', 'Понедельник')|replace('Tuesday', 'Вторник')|replace('Wednesday', 'Среда')|replace('Thursday', 'Четверг')|replace('Friday', 'Пятница') }}<br>{{ day.date }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody id="schedule-body">
+                    {% for slot in schedule %}
+                        <tr>
+                            <td>{{ slot.time }}</td>
+                            {% for day in days %}
+                                <td>
+                                    {% set lesson = slot.lessons | selectattr('date', 'equalto', day.date) | first %}
+                                    {% if lesson %}{{ lesson.subject }}<br>{{ lesson.teacher_name }}<br>{{ lesson.room }}{% endif %}
+                                </td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Инициализация текущей даты (10:53 AM CEST, 08.06.2025)
+    let currentWeekStart = new Date('2025-06-08T10:53:00+02:00');
+    // Вычисляем понедельник текущей недели
+    const dayOfWeek = currentWeekStart.getDay(); // 0 (воскресенье) - 6 (суббота)
+    const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    currentWeekStart.setDate(currentWeekStart.getDate() - daysToMonday);
+    // Устанавливаем начало дня, чтобы избежать проблем с часовым поясом
+    currentWeekStart.setHours(0, 0, 0, 0);
+
+    function updateSchedule() {
+        const startDate = currentWeekStart.toISOString().split('T')[0];
+        const endDate = new Date(currentWeekStart);
+        endDate.setDate(endDate.getDate() + 5); // Пятница (4-й день от понедельника)
+        const endDateStr = endDate.toISOString().split('T')[0];
+        const classId = document.getElementById('class_select').value;
+        console.log(`Updating schedule: classId=${classId}, startDate=${startDate}, endDate=${endDateStr}`); // Отладка
+
+        fetch(`/class_schedule_data?start_date=${startDate}&end_date=${endDateStr}&class_id=${classId}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('JSON response:', JSON.stringify(data, null, 2)); // Для отладки
+                const days = data.days;
+                const schedule = data.schedule;
+
+                // Обновляем диапазон недель с проверкой
+                const formattedStart = days[0]?.date || startDate.replace(/(\d{4})-(\d{2})-(\d{2})/, '$3.$2.$1');
+                const formattedEnd = days[days.length - 1]?.date || endDateStr.replace(/(\d{4})-(\d{2})-(\d{2})/, '$3.$2.$1');
+                document.getElementById('week-range').textContent = `${formattedStart}-${formattedEnd}`;
+
+                // Обновляем заголовки таблицы
+                const thead = document.getElementById('schedule-head');
+                thead.innerHTML = `
+                    <tr>
+                        <th scope="col">Время</th>
+                        ${days.map(day => `
+                            <th scope="col">${day.day_name.replace('Monday', 'Понедельник').replace('Tuesday', 'Вторник').replace('Wednesday', 'Среда').replace('Thursday', 'Четверг').replace('Friday', 'Пятница')}<br>${day.date}</th>
+                        `).join('')}
+                    </tr>
+                `;
+
+                // Обновляем тело таблицы
+                const tbody = document.getElementById('schedule-body');
+                tbody.innerHTML = '';
+                schedule.forEach(slot => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `<td>${slot.time}</td>`;
+                    days.forEach(day => {
+                        const lesson = slot.lessons.find(l => l.date === day.date) || {};
+                        console.log(`Rendering lesson: time=${slot.time}, date=${day.date}, lesson=`, lesson); // Для отладки
+                        const teacherName = lesson.teacher_name || 'Не указан';
+                        const room = lesson.room || 'Не указан';
+                        row.innerHTML += `<td>${lesson.subject ? lesson.subject + '<br>' + teacherName + '<br>' + room : ''}</td>`;
+                    });
+                    tbody.appendChild(row);
+                });
+            })
+            .catch(error => console.error('Ошибка загрузки расписания:', error));
+    }
+
+    document.getElementById('prev-week').addEventListener('click', () => {
+        currentWeekStart.setDate(currentWeekStart.getDate() - 7);
+        updateSchedule();
+    });
+
+    document.getElementById('next-week').addEventListener('click', () => {
+        currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+        updateSchedule();
+    });
+
+    document.getElementById('class_select').addEventListener('change', () => {
+        const classId = document.getElementById('class_select').value;
+        console.log(`Class changed to: ${classId}`); // Отладка
+        updateSchedule();
+    });
+
+    updateSchedule();
+});
+</script>
 {% endblock %}

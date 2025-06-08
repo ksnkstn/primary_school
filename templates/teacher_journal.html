@@ -5,8 +5,8 @@
 {% endblock %}
 
 {% block body %}
-<div class="container mt-2 position-relative">
-    <div class="row mb-2">
+<div class="container mt-1 position-relative">
+    <div class="row mb-3">
         <div class="col-md-3">
             <label for="class_select" class="form-label">Класс:</label>
             <select id="class_select" class="form-select">
@@ -25,7 +25,7 @@
         </div>
     </div>
 
-    <div class="table-responsive mt-1" style="max-height: 500px; overflow-y: auto;">
+    <div class="table-responsive mt-3" style="max-height: 400px; overflow-y: auto; margin-bottom: 20px;">
         <table class="table table-bordered fixed-table" id="journal-table">
             <thead>
                 <tr>
@@ -102,7 +102,7 @@
 </div>
 
 <style>
-    .fixed-table {
+.fixed-table {
         table-layout: fixed;
         width: 100%;
     }
@@ -160,6 +160,9 @@
     }
     .table-responsive {
         z-index: 0;
+        margin-top: 2px !important;
+        margin-bottom: 10px !important;
+        max-height: 600px !important;
     }
 </style>
 
@@ -392,16 +395,18 @@ document.addEventListener('DOMContentLoaded', () => {
     function bindHomeworkEvent(cell) {
         cell.addEventListener('click', (e) => {
             const date = e.target.getAttribute('data-date');
+            const fullContent = e.target.getAttribute('data-full-content'); // Используем полное содержимое
             const currentValue = e.target.innerText;
 
             const input = document.createElement('input');
             input.type = 'text';
-            input.value = currentValue || '';
+            input.value = fullContent || currentValue || ''; // Устанавливаем полное содержимое для редактирования
             input.style.width = '100px';
 
             input.addEventListener('blur', () => {
                 const newHomework = input.value;
-                e.target.innerText = newHomework;
+                e.target.innerText = newHomework.length > 10 ? newHomework.substring(0, 10) + '...' : newHomework; // Обрезаем для отображения
+                e.target.setAttribute('data-full-content', newHomework); // Сохраняем полное содержимое
                 saveHomework(date, newHomework);
                 document.activeElement.blur();
             });
@@ -490,7 +495,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log(`ДЗ "${content}" сохранено для date=${date}`);
                 const homeworkCell = document.querySelector(`.homework[data-date="${date}"]`);
                 if (homeworkCell) {
-                    homeworkCell.innerText = content;
+                    homeworkCell.innerText = content.length > 10 ? content.substring(0, 10) + '...' : content;
                     homeworkCell.setAttribute('data-full-content', content);
                 }
             } else {
