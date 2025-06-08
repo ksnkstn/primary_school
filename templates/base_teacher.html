@@ -31,7 +31,51 @@
         </div>
     </header>
     {% endif %}
+    <style>
+        header.header_teacher {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            background-color: #d4e4d1;
+            padding: 10px 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav-buttons a {
+            margin: 0 10px;
+            text-decoration: none;
+            padding: 5px 15px;
+        }
+        .btn-success {
+            background-color: #355e3b;
+            border: none;
+        }
 
+        .btn-success:hover {
+            background-color: #2a4a2f;
+        }
+        .profile {
+            display: flex;
+            align-items: center;
+        }
+        .icon svg {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+        }
+        .logout {
+            margin-left: 15px;
+            cursor: pointer;
+        }
+        .content {
+            margin-top: 80px;
+            padding: 20px;
+        }
+    </style>
     <div class="content">
         {% block body %}
         {% endblock %}

@@ -2,78 +2,463 @@
 
 {% block title %}
 Дневник ученика
-{% endblock%}
+{% endblock %}
 
 {% block body %}
-    <h1>Дневник ученика</h1>
-<li>Lorem ipsum dolor sit amet.</li>
-<li>Adipisci autem dicta quidem. Consequatur!</li>
-<li>Ab esse ex harum magni.</li>
-<li>Debitis exercitationem fugit libero omnis.</li>
-<li>Explicabo inventore nostrum numquam quidem!</li>
-<li>Architecto iure quae reiciendis repellat.</li>
-<li>Amet enim libero perferendis quam.</li>
-<li>Atque est laborum tempora veritatis!</li>
-<li>Autem numquam quidem recusandae vel!</li>
-<li>Ad ea eveniet odit quia.</li>
-<li>Culpa laboriosam libero quaerat ratione.</li>
-<li>Consequatur dolore error iste nisi!</li>
-<li>Fuga minus pariatur quisquam rem?</li>
-<li>Autem est minima nihil ullam!</li>
-<li>Aperiam consequatur nobis tempore. Dolores.</li>
-<li>Consequatur dolore dolores eaque provident!</li>
-<li>Delectus magni nostrum numquam sit?</li>
-<li>Ab et omnis recusandae reiciendis.</li>
-<li>Atque doloremque doloribus obcaecati perspiciatis?</li>
-<li>Corporis dicta hic illum laudantium!</li>
-<li>Beatae esse facilis ipsa! Earum.</li>
-<li>Accusamus facilis laboriosam sed voluptate.</li>
-<li>Eius facilis impedit veniam! Labore?</li>
-<li>Corporis illo nisi ratione repellat!</li>
-<li>Dolores id itaque placeat tenetur!</li>
-<li>Dignissimos distinctio iusto magnam necessitatibus.</li>
-<li>Blanditiis dolor facilis odit officia!</li>
-<li>Non, quibusdam quis? Deserunt, doloribus?</li>
-<li>Assumenda cupiditate earum porro sequi?</li>
-<li>Natus quis recusandae rerum sunt!</li>
-<li>A aliquid non rerum voluptas?</li>
-<li>Aliquam distinctio magnam quis. Unde.</li>
-<li>Atque itaque necessitatibus repudiandae voluptates.</li>
-<li>Eos laborum minus officiis vel!</li>
-<li>Adipisci aliquam consectetur consequuntur quidem.</li>
-<li>Ab harum hic rerum temporibus.</li>
-<li>Consequatur eos non recusandae ut.</li>
-<li>Animi error esse iste placeat.</li>
-<li>Ab eius fuga maxime pariatur?</li>
-<li>Aperiam nemo quidem repellendus similique.</li>
-<li>Obcaecati pariatur quisquam sint tenetur.</li>
-<li>Aperiam aspernatur consequatur ipsa tenetur?</li>
-<li>Ab accusantium iure nemo officiis!</li>
-<li>Iste libero maiores quae voluptate.</li>
-<li>Aut iusto nihil quia quibusdam?</li>
-<li>Cumque debitis enim placeat sapiente.</li>
-<li>Illo nulla officiis perspiciatis quasi.</li>
-<li>Eos fugit illum magni quas.</li>
-<li>Consequuntur cum, ipsam! Ex, voluptas?</li>
-<li>Eos ex quod sunt voluptate?</li>
-<li>Doloribus natus quis voluptatem. Veritatis?</li>
-<li>Aperiam consequatur neque possimus veniam.</li>
-<li>Culpa minima quidem quis vel?</li>
-<li>Cumque dolor labore mollitia optio.</li>
-<li>Accusamus cum ea ipsum non?</li>
-<li>Accusantium ad consequuntur deleniti vero?</li>
-<li>Dolor illo incidunt itaque obcaecati?</li>
-<li>Harum ipsum rem vero voluptas.</li>
-<li>Dicta dolorem inventore nesciunt vel!</li>
-<li>A minus quam quod tempore?</li>
-<li>Ad quam sit tempore voluptas.</li>
-<li>Asperiores inventore quam sed voluptatibus?</li>
-<li>At fugit possimus tempore voluptate!</li>
-<li>Error facere labore possimus voluptates.</li>
-<li>Ad eos et quae quisquam.</li>
-<li>Distinctio inventore magni suscipit tempore.</li>
-<li>Animi architecto dicta dolorum exercitationem?</li>
-<li>Enim inventore natus recusandae veritatis.</li>
-<li>Consequatur doloribus eos necessitatibus quia!</li>
-<li>Culpa placeat porro quasi voluptatum?</li>
-{% endblock%}
+    <h1 style="text-align: left; font-size: 1.2em; margin-top: 10px;">Дневник ученика: {{ student.name }} ({{ student.class_name }})</h1>
+
+    <!-- Кнопки переключения недель -->
+    <div class="week-nav">
+        <button id="prev-week"><</button>
+        <span id="week-range">{{ current_week_start }} - {{ current_week_end }}</span>
+        <button id="next-week">></button>
+    </div>
+
+    <!-- Две колонки для дней недели с использованием Grid -->
+    <div class="week-grid" id="week1">
+        <!-- Колонка 1: Понедельник, Вторник, Среда -->
+        <div class="day-column">
+            {% for day in days %}
+                {% if day.date|string_to_date|get_weekday < 3 %}  <!-- Понедельник (0), Вторник (1), Среда (2) -->
+                    <div class="day-table">
+                        <h4>{{ 'Понедельник, ' + day.date if day.date|string_to_date|get_weekday == 0 else 'Вторник, ' + day.date if day.date|string_to_date|get_weekday == 1 else 'Среда, ' + day.date }}</h4>
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Время</th>
+                                    <th>Предмет</th>
+                                    <th>Оценка</th>
+                                    <th>Комментарий</th>
+                                    <th>Домашнее задание</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for time in ['08:00-08:45', '08:50-09:35', '09:40-10:25', '10:45-11:30', '11:35-12:20', '12:25-13:10'] %}
+                                    <tr>
+                                        <td style="text-align: center; color: #666; padding: 8px; height: 40px; line-height: 20px; vertical-align: middle;">
+                                            {{ time|replace('-', '<br>') }}
+                                        </td>
+                                        {% set day_data = daily_data.get(day.date, {'lessons': [], 'grades': [], 'homework': []}) %}
+                                        {% set lesson = day_data.lessons|selectattr('time', 'equalto', time)|first %}
+                                        <td style="text-align: left; padding: 8px; word-wrap: break-word;">{{ lesson.subject if lesson else '' }}</td>
+                                        <td style="padding: 8px; vertical-align: top;">
+                                            {% if lesson %}
+                                                {% set grades = day_data.grades|selectattr('date|string_to_date', 'equalto', day.date|string_to_date)|selectattr('subject', 'equalto', lesson.subject)|list %}
+                                                {% if grades %}
+                                                    {% for grade in grades %}
+                                                        {{ grade.grade }}<br>
+                                                    {% endfor %}
+                                                {% endif %}
+                                            {% endif %}
+                                        </td>
+                                        <td style="padding: 8px; vertical-align: top; position: relative;">
+                                            {% if lesson %}
+                                                {% set grades = day_data.grades|selectattr('date|string_to_date', 'equalto', day.date|string_to_date)|selectattr('subject', 'equalto', lesson.subject)|list %}
+                                                {% if grades %}
+                                                    {% for grade in grades %}
+                                                        <span class="comment-text" data-full-comment="{{ grade.comment if grade.comment else '' }}">{{ (grade.comment[:20] + '...') if grade.comment and grade.comment|length > 20 else (grade.comment if grade.comment else '') }}</span><br>
+                                                    {% endfor %}
+                                                {% endif %}
+                                            {% endif %}
+                                        </td>
+                                        <td style="padding: 8px; position: relative;" class="hw-cell">
+                                            {% for hw in day_data.homework %}
+                                                {% set full_hw = hw.content %}
+                                                {% set short_hw = full_hw[:20] + '...' if full_hw|length > 20 else full_hw %}
+                                                <span class="hw-text" data-full-hw="{{ full_hw }}">{{ short_hw }}</span>
+                                            {% endfor %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        <!-- Колонка 2: Четверг, Пятница -->
+        <div class="day-column">
+            {% for day in days %}
+                {% if day.date|string_to_date|get_weekday >= 3 and day.date|string_to_date|get_weekday < 5 %}  <!-- Четверг (3), Пятница (4) -->
+                    <div class="day-table">
+                        <h4>{{ 'Четверг, ' + day.date if day.date|string_to_date|get_weekday == 3 else 'Пятница, ' + day.date }}</h4>
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Время</th>
+                                    <th>Предмет</th>
+                                    <th>Оценка</th>
+                                    <th>Комментарий</th>
+                                    <th>Домашнее задание</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for time in ['08:00-08:45', '08:50-09:35', '09:40-10:25', '10:45-11:30', '11:35-12:20', '12:25-13:10'] %}
+                                    <tr>
+                                        <td style="text-align: center; color: #666; padding: 8px; height: 40px; line-height: 20px; vertical-align: middle;">
+                                            {{ time|replace('-', '<br>') }}
+                                        </td>
+                                        {% set day_data = daily_data.get(day.date, {'lessons': [], 'grades': [], 'homework': []}) %}
+                                        {% set lesson = day_data.lessons|selectattr('time', 'equalto', time)|first %}
+                                        <td style="text-align: left; padding: 8px; word-wrap: break-word;">{{ lesson.subject if lesson else '' }}</td>
+                                        <td style="padding: 8px; vertical-align: top;">
+                                            {% if lesson %}
+                                                {% set grades = day_data.grades|selectattr('date|string_to_date', 'equalto', day.date|string_to_date)|selectattr('subject', 'equalto', lesson.subject)|list %}
+                                                {% if grades %}
+                                                    {% for grade in grades %}
+                                                        {{ grade.grade }}<br>
+                                                    {% endfor %}
+                                                {% endif %}
+                                            {% endif %}
+                                        </td>
+                                        <td style="padding: 8px; vertical-align: top; position: relative;">
+                                            {% if lesson %}
+                                                {% set grades = day_data.grades|selectattr('date|string_to_date', 'equalto', day.date|string_to_date)|selectattr('subject', 'equalto', lesson.subject)|list %}
+                                                {% if grades %}
+                                                    {% for grade in grades %}
+                                                        <span class="comment-text" data-full-comment="{{ grade.comment if grade.comment else '' }}">{{ (grade.comment[:20] + '...') if grade.comment and grade.comment|length > 20 else (grade.comment if grade.comment else '') }}</span><br>
+                                                    {% endfor %}
+                                                {% endif %}
+                                            {% endif %}
+                                        </td>
+                                        <td style="padding: 8px; position: relative;" class="hw-cell">
+                                            {% for hw in day_data.homework %}
+                                                {% set full_hw = hw.content %}
+                                                {% set short_hw = full_hw[:20] + '...' if full_hw|length > 20 else full_hw %}
+                                                <span class="hw-text" data-full-hw="{{ full_hw }}">{{ short_hw }}</span>
+                                            {% endfor %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Модальное окно для отображения полного текста -->
+    <div class="modal fade" id="detailModal" tabindex="-1" aria-labelledby="detailModalLabel" aria-hidden="true" style="z-index: 10000;">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="detailModalLabel">Подробности</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="modalContent">
+                    <!-- Контент будет динамически заполняться -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .week-nav {
+            margin: 10px 0;
+            text-align: center;
+        }
+        .week-nav button {
+            padding: 5px 10px;
+            margin: 0 5px;
+            cursor: pointer;
+        }
+        .week-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* Две равные колонки */
+            gap: 10px; /* Расстояние между колонками */
+            margin: 0 5px;
+            position: relative; /* Устанавливаем контекст для z-index */
+            z-index: 0; /* Базовый уровень для контейнера */
+        }
+        .day-column {
+            display: flex;
+            flex-direction: column;
+            gap: 15px; /* Расстояние между таблицами в колонке */
+        }
+        .day-table {
+            margin-bottom: 0; /* Убираем нижний отступ, так как он управляется gap */
+            border-radius: 15px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 100%; /* Занимает всю доступную ширину колонки */
+            position: relative; /* Контекст для z-index внутри таблицы */
+        }
+        .day-table h4 {
+            margin-top: 0;
+            font-size: 1.1em;
+            color: #333;
+        }
+        table {
+            width: 100%; /* Занимает всю ширину .day-table */
+            border-collapse: collapse;
+            background-color: #fff;
+            border-radius: 10px;
+            overflow: hidden;
+            table-layout: fixed; /* Фиксированная структура таблицы */
+            min-width: 600px; /* Фиксированная минимальная ширина */
+            height: 500px; /* Фиксированная высота, соответствующая таблице Понедельника */
+            overflow-y: auto; /* Прокрутка по вертикали */
+            position: relative; /* Контекст для z-index */
+            z-index: 1; /* Уровень таблицы */
+        }
+        th, td {
+            border: 1px solid #dee2e6;
+            padding: 8px;
+            text-align: center;
+            word-wrap: break-word;
+            overflow: hidden;
+            max-height: 60px;
+            vertical-align: middle;
+        }
+        th:nth-child(2), td:nth-child(2) {
+            min-width: 150px;
+            max-width: 150px;
+        }
+        td:nth-child(3), td:nth-child(4), td:nth-child(5) {
+            max-width: 100px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        tr:hover {
+            background-color: #e9ecef;
+        }
+       .hw-cell .hw-text,
+        .comment-text {
+            max-width: 90px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            display: inline-block;
+            position: relative;
+        }
+
+        .hw-cell .hw-text:hover::after,
+        .comment-text:hover::after {
+            content: attr(title);
+            position: absolute; /* Позиционирование относительно таблицы */
+            background-color: #d4edda;
+            color: #155724;
+            padding: 10px 15px;
+            border-radius: 5px;
+            z-index: 10000; /* Очень высокий уровень наложения */
+            white-space: normal;
+            max-width: 300px;
+            min-width: 150px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            word-break: break-word;
+        }
+
+        .hw-cell .hw-text:hover::after {
+            left: -100%; /* Появление слева */
+            top: 50%;
+            transform: translateY(-50%); /* Центрирование по вертикали */
+        }
+
+        .comment-text:hover::after {
+            right: -100%; /* Появление справа */
+            top: 50%;
+            transform: translateY(-50%); /* Центрирование по вертикали */
+        }
+        .holiday-box {
+            padding: 5px;
+            text-align: center;
+            background-color: #d4edda;
+            color: #155724;
+            border-radius: 5px;
+            font-size: 1.1em;
+            font-weight: bold;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+
+    /* Стили для модального окна */
+    .modal {
+        z-index: 10000 !important; /* Высокий приоритет для модала */
+    }
+    .modal-dialog {
+        position: fixed !important; /* Фиксируем позицию модала */
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        z-index: 10001 !important; /* Убеждаемся, что модал выше всех */
+    }
+    .modal-content {
+        border-radius: 15px !important; /* Закругление модала */
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important; /* Усиленная тень */
+    }
+    .modal-backdrop {
+        z-index: 9999 !important; /* Фон модала ниже содержимого, но выше таблицы */
+    }
+</style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const prevWeek = document.getElementById('prev-week');
+            const nextWeek = document.getElementById('next-week');
+            const weekRange = document.getElementById('week-range');
+            const debugOutput = document.getElementById('debug-output');
+            let currentWeekStart = new Date('{{ current_week_start|string_to_date|tojson }}'.replace(/"/g, '')); // Удаляем лишние кавычки
+            currentWeekStart.setHours(0, 0, 0, 0);
+
+            const detailModal = new bootstrap.Modal(document.getElementById('detailModal'), { backdrop: 'static', keyboard: false });
+            const modalContent = document.getElementById('modalContent');
+
+            function formatDate(date) {
+                return date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/(\d+)\.(\d+)\.(\d+)/, '$1.$2.$3');
+            }
+
+            function updateSchedule() {
+                const startDate = formatDate(currentWeekStart);
+                const endDate = formatDate(new Date(currentWeekStart.getTime() + 4 * 24 * 60 * 60 * 1000));
+                weekRange.textContent = `${startDate} - ${endDate}`;
+
+                fetch(`/student_diary_data?start_date=${startDate}&end_date=${endDate}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Fetched data:', data);
+                        if (data.error) {
+                            console.error(data.error);
+                            return;
+                        }
+
+                        const days = data.days;
+                        const dailyData = data.daily_data;
+                        const week1 = document.getElementById('week1');
+                        console.log('Updating week1 with days:', days);
+                        console.log('Updating week1 with dailyData:', dailyData);
+                        week1.innerHTML = `
+                            <div class="day-column">
+                                ${days.filter((d, index) => index < 3).map(d => {
+                                    const dayData = dailyData[d.date] || { lessons: [], grades: [], homework: [] };
+                                    const dayName = new Date(d.date.split('.').reverse().join('-')).toLocaleDateString('ru-RU', { weekday: 'long' });
+                                    return `
+                                        <div class="day-table">
+                                            <h4>${dayName}, ${d.date}</h4>
+                                            <table class="table table-bordered">
+                                                <thead><tr><th>Время</th><th>Предмет</th><th>Оценка</th><th>Комментарий</th><th>Домашнее задание</th></tr></thead>
+                                                <tbody>
+                                                    ${['08:00-08:45', '08:50-09:35', '09:40-10:25', '10:45-11:30', '11:35-12:20', '12:25-13:10'].map(time => {
+                                                        const lesson = dayData.lessons.find(l => l.time === time) || {};
+                                                        const hw = lesson.subject ? dayData.homework.find(h => h.date.toString() === d.date && h.subject === lesson.subject) : null;
+                                                        const fullHw = hw ? hw.content : '';
+                                                        const shortHw = fullHw.length > 20 ? fullHw.substring(0, 20) + '...' : fullHw;
+                                                        return `
+                                                            <tr>
+                                                                <td style="text-align: center; color: #666; padding: 8px; height: 40px; line-height: 20px; vertical-align: middle;">
+                                                                    ${time.replace('-', '<br>')}
+                                                                </td>
+                                                                <td style="text-align: left; padding: 8px; word-wrap: break-word;">${lesson.subject || ''}</td>
+                                                                <td style="padding: 8px; vertical-align: top;">
+                                                                    ${lesson ? (dayData.grades.filter(g => g.date === d.date && g.subject === lesson.subject).length > 0 ? dayData.grades.filter(g => g.date === d.date && g.subject === lesson.subject).map(g => `${g.grade}<br>`).join('') : '') : ''}
+                                                                </td>
+                                                                <td style="padding: 8px; vertical-align: top; position: relative;">
+                                                                    ${lesson ? (dayData.grades.filter(g => g.date === d.date && g.subject === lesson.subject).length > 0 ? dayData.grades.filter(g => g.date === d.date && g.subject === lesson.subject).map(g => {
+                                                                        const comment = g.comment || '';
+                                                                        const shortComment = comment.length > 20 ? comment.substring(0, 20) + '...' : comment;
+                                                                        return `<span class="comment-text" data-full-comment="${comment}">${shortComment}</span><br>`;
+                                                                    }).join('') : '') : ''}
+                                                                </td>
+                                                                <td style="padding: 8px; position: relative;" class="hw-cell">
+                                                                    <span class="hw-text" data-full-hw="${fullHw}">${shortHw}</span>
+                                                                </td>
+                                                            </tr>
+                                                        `;
+                                                    }).join('')}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                            <div class="day-column">
+                                ${days.filter((d, index) => index >= 3 && index < 5).map(d => {
+                                    const dayData = dailyData[d.date] || { lessons: [], grades: [], homework: [] };
+                                    const dayName = new Date(d.date.split('.').reverse().join('-')).toLocaleDateString('ru-RU', { weekday: 'long' });
+                                    return `
+                                        <div class="day-table">
+                                            <h4>${dayName}, ${d.date}</h4>
+                                            <table class="table table-bordered">
+                                                <thead><tr><th>Время</th><th>Предмет</th><th>Оценка</th><th>Комментарий</th><th>Домашнее задание</th></tr></thead>
+                                                <tbody>
+                                                    ${['08:00-08:45', '08:50-09:35', '09:40-10:25', '10:45-11:30', '11:35-12:20', '12:25-13:10'].map(time => {
+                                                        const lesson = dayData.lessons.find(l => l.time === time) || {};
+                                                        const hw = lesson.subject ? dayData.homework.find(h => h.date.toString() === d.date && h.subject === lesson.subject) : null;
+                                                        const fullHw = hw ? hw.content : '';
+                                                        const shortHw = fullHw.length > 20 ? fullHw.substring(0, 20) + '...' : fullHw;
+                                                        return `
+                                                            <tr>
+                                                                <td style="text-align: center; color: #666; padding: 8px; height: 40px; line-height: 20px; vertical-align: middle;">
+                                                                    ${time.replace('-', '<br>')}
+                                                                </td>
+                                                                <td style="text-align: left; padding: 8px; word-wrap: break-word;">${lesson.subject || ''}</td>
+                                                                <td style="padding: 8px; vertical-align: top;">
+                                                                    ${lesson ? (dayData.grades.filter(g => g.date === d.date && g.subject === lesson.subject).length > 0 ? dayData.grades.filter(g => g.date === d.date && g.subject === lesson.subject).map(g => `${g.grade}<br>`).join('') : '') : ''}
+                                                                </td>
+                                                                <td style="padding: 8px; vertical-align: top; position: relative;">
+                                                                    ${lesson ? (dayData.grades.filter(g => g.date === d.date && g.subject === lesson.subject).length > 0 ? dayData.grades.filter(g => g.date === d.date && g.subject === lesson.subject).map(g => {
+                                                                        const comment = g.comment || '';
+                                                                        const shortComment = comment.length > 20 ? comment.substring(0, 20) + '...' : comment;
+                                                                        return `<span class="comment-text" data-full-comment="${comment}">${shortComment}</span><br>`;
+                                                                    }).join('') : '') : ''}
+                                                                </td>
+                                                                <td style="padding: 8px; position: relative;" class="hw-cell">
+                                                                    <span class="hw-text" data-full-hw="${fullHw}">${shortHw}</span>
+                                                                </td>
+                                                            </tr>
+                                                        `;
+                                                    }).join('')}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        `;
+                        debugOutput.innerHTML = `<p>Debug days: ${JSON.stringify(days)}</p><p>Debug daily_data: ${JSON.stringify(dailyData)}</p>`;
+
+                        // Привязка событий после обновления таблицы
+                        document.querySelectorAll('.comment-text, .hw-text').forEach(element => {
+                            element.addEventListener('click', () => {
+                                const fullText = element.classList.contains('comment-text') ? element.getAttribute('data-full-comment') : element.getAttribute('data-full-hw');
+                                modalContent.textContent = fullText || 'Нет данных';
+                                detailModal.show();
+                            });
+                        });
+                    })
+                    .catch(error => console.error('Ошибка загрузки данных:', error));
+            }
+
+            prevWeek.addEventListener('click', () => {
+                currentWeekStart.setDate(currentWeekStart.getDate() - 7);
+                updateSchedule();
+            });
+
+            nextWeek.addEventListener('click', () => {
+                currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+                updateSchedule();
+            });
+
+            console.log('Initial render with days:', {{ days|tojson }});
+            console.log('Initial render with daily_data:', {{ daily_data|tojson }});
+            updateSchedule();
+        });
+    </script>
+{% endblock %}

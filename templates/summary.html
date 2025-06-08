@@ -1,0 +1,147 @@
+{% extends 'base_student.html' %}
+
+{% block title %}
+Итоги
+{% endblock %}
+
+{% block body %}
+    <h1 style="text-align: left; font-size: 1.2em; margin-top: 10px;">Итоги: {{ student.name }} ({{ student.class_name }})</h1>
+
+    <!-- Переключение по четвертям -->
+    <div class="quarter-nav" style="margin: 10px 0; text-align: center;">
+        <button class="quarter-btn" data-quarter="1" class="active">1 класс</button>
+        <button class="quarter-btn disabled" data-quarter="2" disabled>2 класс</button>
+        <button class="quarter-btn disabled" data-quarter="3" disabled>3 класс</button>
+        <button class="quarter-btn disabled" data-quarter="4" disabled>4 класс</button>
+    </div>
+
+    <!-- Таблица успеваемости -->
+    <div class="progress-table" id="progress-table">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Предметы</th>
+                    <th>1 четверть</th>
+                    <th>2 четверть</th>
+                    <th>3 четверть</th>
+                    <th>4 четверть</th>
+                    <th>Год</th> <!-- Изначально показываем 1 четверть -->
+                </tr>
+            </thead>
+            <tbody>
+                {% for subject in ['Английский язык', 'История', 'Литература', 'Логика', 'Математика', 'Окружающий мир', 'Русский язык', 'Физкультура'] %}
+                    <tr>
+                        <td>{{ subject }}</td>
+                        {% for quarter in range(1, 5) %}
+                            {% set progress = progress_by_subject[subject][quarter] %}
+                            {% if progress and progress.final_grade is not none %}
+                                <td>{{ progress.final_grade }}</td>
+                            {% else %}
+                                <td><i style="color: #808080;">{{ progress.average_grade if progress else '' }}</i></td>
+                            {% endif %}
+                        {% endfor %}
+                        {% set quarters = [] %}
+                        {% for q in range(1, 5) %}
+                            {% if progress_by_subject[subject][q] and progress_by_subject[subject][q].final_grade is not none %}
+                                {% set _ = quarters.append(progress_by_subject[subject][q].final_grade|int) %}
+                            {% endif %}
+                        {% endfor %}
+                        {% if quarters|length == 4 %}
+                            <td>{{ (quarters|sum / 4.0)|round|int }}</td>
+                        {% else %}
+                            <td></td>
+                        {% endif %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <style>
+        .quarter-nav {
+            margin: 10px 0;
+            text-align: center;
+        }
+        .quarter-btn {
+            padding: 5px 25px;
+            margin: 0 5px;
+            cursor: pointer;
+            background-color: #355e3b; /* Зеленый фон для кнопок */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+        .quarter-btn:hover {
+            background-color: #2a4a2f; /* Темнее при наведении */
+        }
+        .quarter-btn.active {
+            background-color: #006400; /* Темный зеленый для активной кнопки */
+            font-weight: bold;
+        }
+        .quarter-btn.disabled {
+            background-color: #a9a9a9; /* Серый фон для отключённых кнопок */
+            color: #666; /* Серый текст */
+            cursor: not-allowed; /* Изменённый курсор */
+            opacity: 0.6; /* Полупрозрачность */
+        }
+        .quarter-btn.disabled:hover {
+            background-color: #a9a9a9; /* Нет эффекта при наведении */
+        }
+        .progress-table {
+            margin: 10px 0;
+        }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #fff;
+            border-radius: 10px;
+            overflow: hidden;
+            table-layout: fixed;
+        }
+        .table th,
+        .table td {
+            border: 1px solid #dee2e6;
+            padding: 8px;
+            text-align: center;
+            word-wrap: break-word;
+        }
+        .table th {
+            background-color: #28a745; /* Зеленый фон для заголовков */
+            color: #000000;
+            font-weight: bold;
+        }
+        .table tr:nth-child(even) {
+            background-color: #e9f5e9; /* Светло-зеленый фон для чередования */
+        }
+        .table tr:hover {
+            background-color: #d4edda; /* Светло-зеленый при наведении */
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const quarterButtons = document.querySelectorAll('.quarter-btn');
+            const tableHeader = document.querySelector('.table th:last-child');
+            const quarterData = {
+                1: 'Итог 1 четверть',
+                2: 'Итог 2 четверть',
+                3: 'Итог 3 четверть',
+                4: 'Итог 4 четверть'
+            };
+
+            quarterButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    if (!button.classList.contains('disabled')) {
+                        quarterButtons.forEach(btn => btn.classList.remove('active'));
+                        button.classList.add('active');
+                        tableHeader.textContent = quarterData[button.getAttribute('data-quarter')];
+                    }
+                });
+            });
+
+            // Активируем первый класс по умолчанию
+            quarterButtons[0].classList.add('active');
+        });
+    </script>
+{% endblock %}
