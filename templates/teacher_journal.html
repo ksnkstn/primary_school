@@ -179,12 +179,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const newDateInput = document.getElementById('new-date-input');
     const saveDateBtn = document.getElementById('save-date-btn');
 
-    // Функция для обрезки текста
-    function truncateText(text, maxLength, useEllipsis) {
-        if (text.length <= maxLength) return text;
-        return text.substr(0, maxLength) + (useEllipsis ? '...' : '');
-    }
-
     // Обновление таблицы при изменении класса или предмета
     function updateJournal() {
         const classId = classSelect.value;
@@ -399,47 +393,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Функция для привязки событий к ячейкам с домашним заданием
     function bindHomeworkEvent(cell) {
-        let isEditing = false;
-        let currentInput = null;
-
         cell.addEventListener('click', (e) => {
-            if (isEditing || e.target.tagName === 'INPUT') return;
-
             const date = e.target.getAttribute('data-date');
-            const fullContent = e.target.getAttribute('data-full-content');
+            const fullContent = e.target.getAttribute('data-full-content'); // Используем полное содержимое
+            const currentValue = e.target.innerText;
 
             const input = document.createElement('input');
             input.type = 'text';
-            input.value = fullContent || '';
+            input.value = fullContent || currentValue || ''; // Устанавливаем полное содержимое для редактирования
             input.style.width = '100px';
-            currentInput = input;
 
             input.addEventListener('blur', () => {
-                const newHomework = input.value.trim();
-                if (newHomework !== fullContent) { // Сохраняем только если есть изменения
-                    e.target.innerText = truncateText(newHomework, 10, true);
-                    e.target.setAttribute('data-full-content', newHomework);
-                    saveHomework(date, newHomework);
-                } else {
-                    e.target.innerText = truncateText(fullContent, 10, true);
-                }
-                e.target.innerHTML = e.target.innerText; // Возвращаем текст вместо input
-                isEditing = false;
-                currentInput = null;
+                const newHomework = input.value;
+                e.target.innerText = newHomework.length > 10 ? newHomework.substring(0, 10) + '...' : newHomework; // Обрезаем для отображения
+                e.target.setAttribute('data-full-content', newHomework); // Сохраняем полное содержимое
+                saveHomework(date, newHomework);
+                document.activeElement.blur();
             });
-
-            // Принудительное завершение редактирования при клике вне
-            document.addEventListener('click', function handleOutsideClick(event) {
-                if (!cell.contains(event.target) && isEditing) {
-                    input.blur();
-                    document.removeEventListener('click', handleOutsideClick);
-                }
-            }, { once: true });
 
             e.target.innerHTML = '';
             e.target.appendChild(input);
             input.focus();
-            isEditing = true;
         });
 
         // Показать tooltip при наведении
@@ -521,7 +495,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log(`ДЗ "${content}" сохранено для date=${date}`);
                 const homeworkCell = document.querySelector(`.homework[data-date="${date}"]`);
                 if (homeworkCell) {
-                    homeworkCell.innerText = truncateText(content, 10, true);
+                    homeworkCell.innerText = content.length > 10 ? content.substring(0, 10) + '...' : content;
                     homeworkCell.setAttribute('data-full-content', content);
                 }
             } else {

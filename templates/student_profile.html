@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Профиль ученика</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .profile-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .photo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .photo img {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .info {
+            margin-bottom: 15px;
+        }
+        .info strong {
+            color: #333;
+        }
+        .notes {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        .back-btn {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #355e3b;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .back-btn:hover {
+            background-color: #2a4a2f;
+        }
+    </style>
+</head>
+<body>
+    <div class="profile-container">
+        <h1>Профиль ученика: {{ student_profile.name }} ({{ student_profile.class_name }})</h1>
+
+        <div class="photo">
+            <img src="{{ student_profile.photo_url }}" alt="Фото ученика">
+        </div>
+
+        <div class="info">
+            <p><strong>Имя:</strong> {{ student_profile.name }}</p>
+            <p><strong>Класс:</strong> {{ student_profile.class_name }}</p>
+            <p><strong>Адрес:</strong> {{ student_profile.address }}</p>
+            <p><strong>Телефон:</strong> {{ student_profile.phone }}</p>
+            <p><strong>Дата рождения:</strong> {{ student_profile.date_of_birth }}</p>
+            <p><strong>Родители:</strong> {{ student_profile.parent_name }}</p>
+            <p><strong>Телефоны родителей:</strong> {{ student_profile.parent_phone }}</p>
+            <p><strong>Дата зачисления:</strong> {{ student_profile.enrollment_date }}</p>
+        </div>
+
+        <div class="notes">
+            <p><strong>Примечания:</strong> {{ student_profile.notes }}</p>
+        </div>
+
+        <a href="{{ url_for('student_diary') }}" class="back-btn">Вернуться в дневник</a>
+    </div>
+</body>
+</html>
